@@ -25,6 +25,7 @@ variable "backend_service_configs" {
     connection_draining_timeout_sec = optional(number)
     enable_cdn                      = optional(bool)
     health_checks                   = optional(list(string), ["default"])
+    locality_lb_policy              = optional(string)
     log_sample_rate                 = optional(number)
     port_name                       = optional(string)
     project_id                      = optional(string)
@@ -133,6 +134,18 @@ variable "backend_service_configs" {
       )
     ])
     error_message = "Invalid session affinity value."
+  }
+  validation {
+    condition = alltrue([
+      for backend_service in values(var.backend_service_configs) : contains(
+        [
+          "-", "ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH",
+          "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV"
+        ],
+        coalesce(backend_service.locality_lb_policy, "-")
+      )
+    ])
+    error_message = "Invalid locality lb policy value."
   }
   validation {
     condition = alltrue(flatten([
